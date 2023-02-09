@@ -464,6 +464,9 @@ def generateStructureData(nodes, v = [], c = []) :
     makeActive(ob3)
     bpy.context.scene.collection.objects.unlink(bpy.context.object)
     bpy.data.collections["EdgeCollection"].objects.link(ob3)
+    #bpy.ops.object.hide_collection(bpy.data.collections["EdgeCollection"])
+    bpy.data.collections["EdgeCollection"].hide_viewport=True
+    makeActive(ob1)
     
 
 def generateStructureData2d(nodes, v = [], c = []) :
@@ -600,13 +603,22 @@ def generateStructureData2d(nodes, v = [], c = []) :
     cols = [[.6, .6, 1, 1],[1, .6, .6, 1]]
     for ob in obs:
         makeActive(ob)
-        #mergeByThreshold(ob, 0.01)            
-        addGeoNodes(ob, "pipes")
+        #mergeByThreshold(ob, 0.01)
+        if i == 0:            
+            addGeoNodes(ob, "pipes")
         #addBevel(ob, 3, 0.1)
         colattr = bpy.context.object.data.color_attributes.new(name = "vcol", type="FLOAT_COLOR", domain='POINT')
         for v_index in range(len(bpy.context.object.data.vertices)):
             colattr.data[v_index].color = cols[i]
         i+=1
+        
+    coll1 = bpy.ops.collection.create(name  = "EdgeCollection")
+    bpy.context.scene.collection.children.link(bpy.data.collections["EdgeCollection"])
+    makeActive(ob2)
+    bpy.context.scene.collection.objects.unlink(bpy.context.object)
+    bpy.data.collections["EdgeCollection"].objects.link(ob2)
+    bpy.data.collections["EdgeCollection"].hide_viewport=True
+    makeActive(ob1)
 context = bpy.context
 scene = context.scene
 
@@ -630,9 +642,9 @@ for m in bpy.data.meshes:
 
 
 #nodes = generateRandomStructure([3,3,3], 1)
-nodes = generateABCStructure([4,4,4], .5, 7, 2, 2, 1)
+nodes = generateABCStructure([4,4,4], 2, 7, 1, 1, 1)
 
-generateStructureData(nodes)
+generateStructureData2d(nodes)
 #bpy.ops.object.mode_set(mode='VERTEX_PAINT')
 #bpy.context.view_layer.objects.active = bpy.context.scene.objects["Plane"]
 #bpy.ops.paint.vertex_color_hsv(h=0, s=2.0, v=2.0)
