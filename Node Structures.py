@@ -183,16 +183,27 @@ def generateRandomStructure( dims, space):
 
 
 
-def generateABCStructure(dims, space, config, a, b, c):
-    nodes = np.ndarray(shape=(dims[0],dims[1],dims[2]),dtype=nodeStruct)
-    for i in range(nodes.shape[0]): 
-        for j in range(nodes.shape[1]):
-            for k in range(nodes.shape[2]):
-                nodes[i,j,k] = nodeStruct(0, [0.0,0.0,0.0], [[0.0,0.0,0.1],[0.0,0.1,0.0]], [[0.1,0.0,0.1],[0.1,0.1,0.0]], [[0.0,0.1,0.1],[0.0,0.1,0.1]], False)
+def generateABCStructure(n, dims, space, config, a, b, c):
+    if n == 3:
+        nodes = np.ndarray(shape=(dims[0],dims[1],dims[2]),dtype=nodeStruct)
+        for i in range(nodes.shape[0]): 
+            for j in range(nodes.shape[1]):
+                for k in range(nodes.shape[2]):
+                    nodes[i,j,k] = nodeStruct(0, [0.0,0.0,0.0], [[0.0,0.0,0.1],[0.0,0.1,0.0]], [[0.1,0.0,0.1],[0.1,0.1,0.0]], [[0.0,0.1,0.1],[0.0,0.1,0.1]], False)
 
-    abcStructure(nodes, config, a, b, c)
-    updateStructure(nodes, space)
-    return nodes
+        abcStructure(nodes, config, a, b, c)
+        updateStructure(nodes, space)
+        generateStructureData(nodes)
+    if n == 2:
+        nodes = np.ndarray(shape=(dims[0],dims[1]),dtype=nodeStruct2d)
+        for i in range(nodes.shape[0]): 
+            for j in range(nodes.shape[1]):
+                nodes[i,j] = nodeStruct2d(0, [0.0,0.0,0.0], [[0.0,0.0,0.1],[0.0,0.1,0.0]], [[0.1,0.0,0.1],[0.1,0.1,0.0]])
+
+        abcStructure2d(nodes, config, a, b, c)
+        updateStructure2d(nodes, space)
+        generateStructureData2d(nodes)
+
 
 
 def generateABCStructure2d(dims, space, config, a, b, c):
@@ -619,6 +630,7 @@ def generateStructureData2d(nodes, v = [], c = []) :
     bpy.data.collections["EdgeCollection"].objects.link(ob2)
     bpy.data.collections["EdgeCollection"].hide_viewport=True
     makeActive(ob1)
+    
 context = bpy.context
 scene = context.scene
 
@@ -642,9 +654,8 @@ for m in bpy.data.meshes:
 
 
 #nodes = generateRandomStructure([3,3,3], 1)
-nodes = generateABCStructure([4,4,4], 2, 7, 1, 1, 1)
+nodes = generateABCStructure(2,[30,30,4], 2, 7, 2, 2, 1)
 
-generateStructureData2d(nodes)
 #bpy.ops.object.mode_set(mode='VERTEX_PAINT')
 #bpy.context.view_layer.objects.active = bpy.context.scene.objects["Plane"]
 #bpy.ops.paint.vertex_color_hsv(h=0, s=2.0, v=2.0)
