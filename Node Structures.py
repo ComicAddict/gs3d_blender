@@ -88,20 +88,20 @@ def abcStructure(nodes, config, a, b, c):
     for i in range(nodes.shape[0]):
         for j in range(nodes.shape[1]): 
             for k in range(nodes.shape[2]):
-                if((i+c*(j+k)) % (a+b) < a):
-                    nodes[i,j,k].config = 0
+                if((i-c*(j+k)) % (a+b) < a):
+                    nodes[i,j,k].config = config
                     nodes[i,j,k].a = True
                 else:
-                    nodes[i,j,k].config = config
+                    nodes[i,j,k].config = 0
                     nodes[i,j,k].a = False
 
 def abcStructure2d(nodes, config, a, b, c):
     for i in range(nodes.shape[0]):
         for j in range(nodes.shape[1]): 
-            if((i+c*(j)) % (a+b) < a):
-                nodes[i,j].config = True
-            else:
+            if((i-c*(j)) % (a+b) < a):
                 nodes[i,j].config = False
+            else:
+                nodes[i,j].config = True
 
 def updateStructure(nodes, space):
     for i in range(nodes.shape[0]): 
@@ -125,28 +125,51 @@ def updateStructure(nodes, space):
                 
 
                 if (nodes[i,j,k].config & (1 << 1)):
-                    nodes[i,j,k].e1[0][0] *= -1.0
-                    nodes[i,j,k].e1[1][0] *= -1.0
-                    nodes[i,j,k].e2[0][0] *= -1.0
-                    nodes[i,j,k].e2[1][0] *= -1.0
-                    nodes[i,j,k].e3[0][0] *= -1.0
-                    nodes[i,j,k].e3[1][0] *= -1.0
-
-                if (nodes[i,j,k].config & (1 << 2)):
                     nodes[i,j,k].e1[0][1] *= -1.0
                     nodes[i,j,k].e1[1][1] *= -1.0
                     nodes[i,j,k].e2[0][1] *= -1.0
                     nodes[i,j,k].e2[1][1] *= -1.0
                     nodes[i,j,k].e3[0][1] *= -1.0
                     nodes[i,j,k].e3[1][1] *= -1.0
-                
 
-                nodes[i,j,k].e1[0] += np.array([i * space - space / 4, j * space, k * space])
-                nodes[i,j,k].e1[1] += np.array([i * space + space / 4, j * space, k * space])
-                nodes[i,j,k].e2[0] += np.array([i * space, j * space - space / 4, k * space])
-                nodes[i,j,k].e2[1] += np.array([i * space, j * space + space / 4, k * space])
-                nodes[i,j,k].e3[0] += np.array([i * space, j * space, k * space - space / 4])
-                nodes[i,j,k].e3[1] += np.array([i * space, j * space, k * space + space / 4])
+                if (nodes[i,j,k].config & (1 << 2)):
+                    nodes[i,j,k].e1[0][0] *= -1.0
+                    nodes[i,j,k].e1[1][0] *= -1.0
+                    nodes[i,j,k].e2[0][0] *= -1.0
+                    nodes[i,j,k].e2[1][0] *= -1.0
+                    nodes[i,j,k].e3[0][0] *= -1.0
+                    nodes[i,j,k].e3[1][0] *= -1.0
+                
+                if i == 0:
+                    nodes[i,j,k].e1[0] += np.array([i * space - space / 2, j * space, k * space])
+                else:
+                    nodes[i,j,k].e1[0] += np.array([i * space - space / 4, j * space, k * space])
+                if i == nodes.shape[0] - 1:
+                    nodes[i,j,k].e1[1] += np.array([i * space + space / 2, j * space, k * space])
+                else:
+                    nodes[i,j,k].e1[1] += np.array([i * space + space / 4, j * space, k * space])
+                    
+                if j == 0:
+                    nodes[i,j,k].e2[0] += np.array([i * space, j * space - space / 2, k * space])
+                else:
+                    nodes[i,j,k].e2[0] += np.array([i * space, j * space - space / 4, k * space])
+                if j == nodes.shape[1] - 1:
+                    nodes[i,j,k].e2[1] += np.array([i * space, j * space + space / 2, k * space])
+                else:
+                    nodes[i,j,k].e2[1] += np.array([i * space, j * space + space / 4, k * space])
+                    
+                if k == 0:
+                    nodes[i,j,k].e3[0] += np.array([i * space, j * space, k * space - space / 2])
+                else:
+                    nodes[i,j,k].e3[0] += np.array([i * space, j * space, k * space - space / 4])
+                if k == nodes.shape[2] - 1:
+                    nodes[i,j,k].e3[1] += np.array([i * space, j * space, k * space + space / 2])
+                else:
+                    nodes[i,j,k].e3[1] += np.array([i * space, j * space, k * space + space / 4])
+
+
+
+
             
 def updateStructure2d(nodes, space):
     for i in range(nodes.shape[0]): 
@@ -203,8 +226,26 @@ def generateABCStructure(n, dims, space, config, a, b, c):
         abcStructure2d(nodes, config, a, b, c)
         updateStructure2d(nodes, space)
         generateStructureData2d(nodes)
+        
+def generateFundamentalStructure(fx, fy, fz, sx, sy, sz, space, shape):
+    nodes = np.ndarray(shape=(shape[0],shape[1],shape[2]),dtype=nodeStruct)
+    configs = np.ndarray(shape=(2,2,2), dtype=np.int32)
+    configs[0,0,0] = 4 * fx     + 2 * fy      + fz
+    configs[0,0,1] = 4 * sx     + 2 * (not fy)    + (not fz)
+    configs[0,1,0] = 4 * (not fx) + 2 * sy        + (not fz)
+    configs[0,1,1] = 4 * (not sx) + 2 * (not sy)  + fz
+    configs[1,0,0] = 4 * (not fx) + 2 * (not fy)  + sz
+    configs[1,0,1] = 4 * (not sx) + 2 * (fy)    + (not sz)
+    configs[1,1,0] = 4 * fx     + 2 * (not sy)    + (not sz)
+    configs[1,1,1] = 4 * sx     + 2 * sy        + sz
+    print(configs)
+    for i in range(nodes.shape[0]): 
+        for j in range(nodes.shape[1]):
+            for k in range(nodes.shape[2]):
+                nodes[i,j,k] = nodeStruct(configs[i%2,j%2,k%2], [0.0,0.0,0.0], [[0.0,0.0,0.1],[0.0,0.1,0.0]], [[0.1,0.0,0.1],[0.1,0.1,0.0]], [[0.0,0.1,0.1],[0.0,0.1,0.1]], False)
 
-
+    updateStructure(nodes, space)
+    generateStructureData(nodes)
 
 def generateABCStructure2d(dims, space, config, a, b, c):
     nodes = np.ndarray(shape=(dims[0],dims[1]),dtype=nodeStruct2d)
@@ -596,7 +637,7 @@ def generateStructureData2d(nodes, v = [], c = []) :
     mesh2.attributes["n2"].data.foreach_set("value",n2y)
     mesh2.attributes["c"].data.foreach_set("vector",cy)
     mesh2.attributes["a"].data.foreach_set("value",ay)
-    mesh2.attributes["q"].data.foreach_set("value",qx)
+    #mesh2.attributes["q"].data.foreach_set("value",qx)
         
     # Create Object and link to scene
     ob1 = bpy.data.objects.new("edges x object", mesh1)
@@ -611,7 +652,8 @@ def generateStructureData2d(nodes, v = [], c = []) :
     bpy.context.scene.collection.objects.link(ob2)
     i = 0
     obs = [ob1, ob2]
-    cols = [[.6, .6, 1, 1],[1, .6, .6, 1]]
+    cols = [[.3922, .5137, 0.6196, 1],[1, .6353, .1451, 1]]
+    cols = [[.6, .6, 1, 1],[1, .6, .6, 1],[.6, 1, .6, 1]]
     for ob in obs:
         makeActive(ob)
         #mergeByThreshold(ob, 0.01)
@@ -633,7 +675,7 @@ def generateStructureData2d(nodes, v = [], c = []) :
     
 context = bpy.context
 scene = context.scene
-
+bpy.ops.object.select_all(action='DESELECT')
 for c in scene.collection.children:
     scene.collection.children.unlink(c)
 
@@ -652,10 +694,19 @@ for m in bpy.data.meshes:
     m.user_clear()
     bpy.data.meshes.remove(m)
 
-
+def generateCubeWireFrame():
+    bpy.ops.mesh.primitive_cube_add(location =(0,0,0))
+    o = bpy.data.objects['Cube']
+    makeActive(o)
+    bpy.ops.object.modifier_add(type='WIREFRAME')
+    bpy.ops.object.material_slot_add()
+    mat = bpy.data.materials.get('wire')
+    o.material_slots[0].material = mat
 #nodes = generateRandomStructure([3,3,3], 1)
-nodes = generateABCStructure(2,[30,30,4], 2, 7, 2, 2, 1)
 
+nodes = generateABCStructure(3,[1,1,1], 2, 7, 2, 2, 1)
+#nodes = generateFundamentalStructure(1,1,1, 0,0,0, 2,[2,2,2])
+generateCubeWireFrame()
 #bpy.ops.object.mode_set(mode='VERTEX_PAINT')
 #bpy.context.view_layer.objects.active = bpy.context.scene.objects["Plane"]
 #bpy.ops.paint.vertex_color_hsv(h=0, s=2.0, v=2.0)
