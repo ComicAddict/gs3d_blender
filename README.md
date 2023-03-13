@@ -12,6 +12,7 @@
  - [x] 3D printing of the magnet bounded pieces
  - [x] 3D modeling of slotted parts
  - [x] 3D printing of slotted parts
+ - [x] For decomposition figures use 3 different images side by side: Sites, boundary, decomposition itself
  - [ ] 3D modeling of the key/slot pair
  - [ ] 3D printing of the key/slot pair
  - [ ] Sweeping exploration for 3D Weave decomposition on the cube fundamental
@@ -19,4 +20,4 @@
  - [ ] unfold, unwrap of the models
  - [ ] Generalized curved structures for saddle, cylinder, dome
  - [ ] Truncated octahedron and hexagonal prism for fundamental structures
- - [ ] For decomposition figures use 3 different images side by side: Sites, boundary, decomposition itself
+ 
