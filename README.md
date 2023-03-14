@@ -20,4 +20,7 @@
  - [ ] unfold, unwrap of the models
  - [ ] Generalized curved structures for saddle, cylinder, dome
  - [ ] Truncated octahedron and hexagonal prism for fundamental structures
+ - [ ] Animation of wrappings with faces extruded
+ - [ ] Create samples for the sweeped angles for explaining the methodology
+ - [ ] Maybe some drawings of the unfolding might help
  
