@@ -13,12 +13,15 @@
  - [x] 3D modeling of slotted parts
  - [x] 3D printing of slotted parts
  - [x] For decomposition figures use 3 different images side by side: Sites, boundary, decomposition itself
+ - [ ] unfolding, unwrap of the models for SMI paper
+ - [ ] Generalized curved structures for saddle, cylinder, dome
+ - [ ] Put the selected the images of voronoi and parametric methods on SMI
+ - [ ] Put more images about non-ABC parametrized, binary parametrized images
+ - [ ] Create models for the inverted dome pieces just for 
  - [ ] 3D modeling of the key/slot pair
  - [ ] 3D printing of the key/slot pair
  - [ ] Sweeping exploration for 3D Weave decomposition on the cube fundamental
  - [ ] On the manufacturing side we can use different materials for different weaves to get cumulative effect on the whole material property
- - [ ] unfold, unwrap of the models
- - [ ] Generalized curved structures for saddle, cylinder, dome
  - [ ] Truncated octahedron and hexagonal prism for fundamental structures
  - [ ] Animation of wrappings with faces extruded
  - [ ] Create samples for the sweeped angles for explaining the methodology
