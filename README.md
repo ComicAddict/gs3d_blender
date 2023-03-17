@@ -15,8 +15,8 @@
  - [x] For decomposition figures use 3 different images side by side: Sites, boundary, decomposition itself
  - [ ] unfolding, unwrap of the models for SMI paper
  - [ ] Generalized curved structures for saddle, cylinder, dome
- - [ ] Put the selected the images of voronoi and parametric methods on SMI
- - [ ] Put more images about non-ABC parametrized, binary parametrized images
+ - [x] Put the selected the images of voronoi and parametric methods on SMI
+ - [ ] Put more images about non-ABC parametrized, binary parametrized images and images with different patterns
  - [ ] Create models for the inverted dome pieces just for 
  - [ ] 3D modeling of the key/slot pair
  - [ ] 3D printing of the key/slot pair
@@ -24,6 +24,4 @@
  - [ ] On the manufacturing side we can use different materials for different weaves to get cumulative effect on the whole material property
  - [ ] Truncated octahedron and hexagonal prism for fundamental structures
  - [ ] Animation of wrappings with faces extruded
- - [ ] Create samples for the sweeped angles for explaining the methodology
- - [ ] Maybe some drawings of the unfolding might help
  
