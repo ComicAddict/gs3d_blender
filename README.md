@@ -13,7 +13,7 @@
  - [x] 3D modeling of slotted parts
  - [x] 3D printing of slotted parts
  - [x] For decomposition figures use 3 different images side by side: Sites, boundary, decomposition itself
- - [ ] unfolding, unwrap of the models for SMI paper
+ - [x] unfolding, unwrap of the models for SMI paper
  - [ ] Generalized curved structures for saddle, cylinder, dome
  - [x] Put the selected the images of voronoi and parametric methods on SMI
  - [ ] Put more images about non-ABC parametrized, binary parametrized images and images with different patterns
