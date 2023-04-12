@@ -109,18 +109,28 @@ def abcStructure2d(nodes, config, a, b, c):
                 nodes[i,j].config = True
                 nodes[i,j].a = False
 
-
-def abcShiftStructure(nodes, config, a, b, c, s0, s1):
+def fabricShiftStructure(nodes, config, fabric, s0, s1):
     for i in range(nodes.shape[0]):
         for j in range(nodes.shape[1]): 
             for k in range(nodes.shape[2]):
-                if((i-c*j) % (a+b) < a):
+                if(fabric[(i+k*s0)%fabric.shape[0],(j+k*s1)%fabric.shape[1]] == 0):
                     nodes[i,j,k].config = 0
                     nodes[i,j,k].a = True
                 else:
                     nodes[i,j,k].config = config
                     nodes[i,j,k].a = False
                     
+def abcShiftStructure(nodes, config, a, b, c, s0, s1):
+    for i in range(nodes.shape[0]):
+        for j in range(nodes.shape[1]): 
+            for k in range(nodes.shape[2]):
+                if((( i + (k* s0))-c*(j + (k * s1))) % (a+b) < a):
+                    nodes[i,j,k].config = 0
+                    nodes[i,j,k].a = True
+                else:
+                    nodes[i,j,k].config = config
+                    nodes[i,j,k].a = False
+                    """
     for k in range(nodes.shape[2]):
         for i in range(nodes.shape[0]): 
             for j in range(nodes.shape[1]):
@@ -128,7 +138,7 @@ def abcShiftStructure(nodes, config, a, b, c, s0, s1):
                     nodes[i,j,k].config = nodes[(i - k * s0) % nodes.shape[0], (j - k * s1) % nodes.shape[1], k-1].config
                     print("Equating cell ", i,", ", j,", ", k , " to ", (i - k * s0) % nodes.shape[0], ", ", (j - k * s1) % nodes.shape[1], ", ", k - 1)
                     nodes[i,j,k].a = nodes[(i - k * s0) % nodes.shape[0], (j - k * s1) % nodes.shape[1], k-1].a
-
+"""
 def updateStructure(nodes, space):
     for i in range(nodes.shape[0]): 
         for j in range(nodes.shape[1]):
@@ -213,10 +223,29 @@ def updateStructure2d(nodes, space):
                 nodes[i,j].e2[0][2] *= -1.0
                 nodes[i,j].e2[1][2] *= -1.0
 
-            nodes[i,j].e1[0] += np.array([i * space - space / 2, j * space, 0])
-            nodes[i,j].e1[1] += np.array([i * space + space / 2, j * space, 0])
-            nodes[i,j].e2[0] += np.array([i * space, j * space - space / 2, 0])
-            nodes[i,j].e2[1] += np.array([i * space, j * space + space / 2, 0])
+   #         nodes[i,j].e1[0] += np.array([i * space - space / 4, j * space, 0])
+  #          nodes[i,j].e1[1] += np.array([i * space + space / 4, j * space, 0])
+ #           nodes[i,j].e2[0] += np.array([i * space, j * space - space / 4, 0])
+#            nodes[i,j].e2[1] += np.array([i * space, j * space + space / 4, 0])
+            
+            if i == 0:
+                nodes[i,j].e1[0] += np.array([i * space - space / 2, j * space,0])
+            else:
+                nodes[i,j].e1[0] += np.array([i * space - space / 4, j * space, 0])
+            if i == nodes.shape[0] - 1:
+                nodes[i,j].e1[1] += np.array([i * space + space / 2, j * space, 0])
+            else:
+                nodes[i,j].e1[1] += np.array([i * space + space / 4, j * space, 0])
+                
+            if j == 0:
+                nodes[i,j].e2[0] += np.array([i * space, j * space - space / 2, 0])
+            else:
+                nodes[i,j].e2[0] += np.array([i * space, j * space - space / 4, 0])
+            if j == nodes.shape[1] - 1:
+                nodes[i,j].e2[1] += np.array([i * space, j * space + space / 2, 0])
+            else:
+                nodes[i,j].e2[1] += np.array([i * space, j * space + space / 4, 0])
+            
 
 
 def generateRandomStructure( dims, space):
@@ -230,6 +259,23 @@ def generateRandomStructure( dims, space):
     updateStructure(nodes, space)
     return nodes
 
+def generateFabricShiftStructure(n, dims, space, config, fabric, s0, s1):
+    if n == 3:
+        nodes = np.ndarray(shape=(dims[0],dims[1],dims[2]),dtype=nodeStruct)
+        for i in range(nodes.shape[0]): 
+            for j in range(nodes.shape[1]):
+                for k in range(nodes.shape[2]):
+                    nodes[i,j,k] = nodeStruct(0, [0.0,0.0,0.0], [[0.0,0.0,0.1],[0.0,0.1,0.0]], [[0.1,0.0,0.1],[0.1,0.1,0.0]], [[0.0,0.1,0.1],[0.0,0.1,0.1]], False)
+
+        fabricShiftStructure(nodes, config, fabric, s0, s1)
+        updateStructure(nodes, space)
+        ob = generateStructureData(nodes)
+        ma = max(dims[0], dims[1], dims[2])
+        m = 1.0/(max(dims[0], dims[1], dims[2])*4.0)
+        ob.modifiers["GeometryNodes"]["Input_8"] = m
+        ob.data.update()
+        ob.location = ob.location - mathutils.Vector((dims[0]/2 * space - space/2, dims[1]/2 * space- space/2, dims[2]/2* space- space/2))
+        
 def generateABCShiftStructure(n, dims, space, config, a, b, c, s0, s1):
     if n == 3:
         nodes = np.ndarray(shape=(dims[0],dims[1],dims[2]),dtype=nodeStruct)
@@ -272,6 +318,11 @@ def generateABCStructure(n, dims, space, config, a, b, c):
         ob.modifiers["GeometryNodes"]["Input_8"] = m
         ob.data.update()
         ob.location = ob.location - mathutils.Vector((dims[0]/2 * space - space/2, dims[1]/2 * space- space/2, dims[2]/2* space- space/2))
+        makeActive(ob)
+        bpy.ops.object.material_slot_add()
+        mat = bpy.data.materials.get('pipeshader')
+        ob.material_slots[0].material = mat
+        
     if n == 2:
         nodes = np.ndarray(shape=(dims[0],dims[1]),dtype=nodeStruct2d)
         for i in range(nodes.shape[0]): 
@@ -292,6 +343,10 @@ def generateABCStructure(n, dims, space, config, a, b, c):
             ob.modifiers["GeometryNodes"]["Input_2"] = False
         ob.data.update()
         ob.location = ob.location - mathutils.Vector((dims[0]/2 * space - space/2, dims[1]/2 * space- space/2, dims[2]/2* space- space/2))
+        makeActive(ob)
+        bpy.ops.object.material_slot_add()
+        mat = bpy.data.materials.get('pipeshader')
+        ob.material_slots[0].material = mat
         
 def generateFundamentalStructure(fx, fy, fz, sx, sy, sz, space, shape):
     nodes = np.ndarray(shape=(shape[0],shape[1],shape[2]),dtype=nodeStruct)
@@ -712,8 +767,8 @@ def generateStructureData2d(nodes, v = [], c = []) :
                 nx.append(j)
                 n1x.append(j * nodes.shape[0] + i - 1)
                 n1x.append(j * nodes.shape[0] + i - 1)
-                n2x.append(j * nodes.shape[0] + i)
-                n2x.append(j * nodes.shape[0] + i)
+                n2x.append(i * nodes.shape[1] + j)
+                n2x.append(i * nodes.shape[1] + j)
                 itx.append(j)
                 itx.append(j)
                 for p in nodes[i,j].pos: cx.append(float(p))
@@ -728,10 +783,10 @@ def generateStructureData2d(nodes, v = [], c = []) :
                 ey.append([iy, iy+1])
                 ny.append(i)
                 ny.append(i)
-                n1y.append((j - 1) * nodes.shape[0] + i)
-                n1y.append((j - 1) * nodes.shape[0] + i)
-                n2y.append(j * nodes.shape[0] + i)
-                n2y.append(j * nodes.shape[0] + i)
+                n1y.append(j * nodes.shape[0] + i)
+                n1y.append(j * nodes.shape[0] + i)
+                n2y.append(i * nodes.shape[1] + j)
+                n2y.append(i * nodes.shape[1] + j)
                 ity.append(i)
                 ity.append(i)
                 for p in nodes[i,j].pos: cy.append(float(p))
@@ -742,12 +797,12 @@ def generateStructureData2d(nodes, v = [], c = []) :
                 q += 1
             n1x.append(j * nodes.shape[0] + i)
             n1x.append(j * nodes.shape[0] + i)
-            n2x.append(j * nodes.shape[0] + i)
-            n2x.append(j * nodes.shape[0] + i)
+            n2x.append(i * nodes.shape[1] + j)
+            n2x.append(i * nodes.shape[1] + j)
             n1y.append(j * nodes.shape[0] + i)
             n1y.append(j * nodes.shape[0] + i)
-            n2y.append(j * nodes.shape[0] + i)
-            n2y.append(j * nodes.shape[0] + i)
+            n2y.append(i * nodes.shape[1] + j)
+            n2y.append(i * nodes.shape[1] + j)
             nx.append(j)
             nx.append(j)
             ny.append(i)
@@ -825,8 +880,9 @@ def generateStructureData2d(nodes, v = [], c = []) :
     bpy.context.scene.collection.objects.link(ob2)
     i = 0
     obs = [ob1, ob2]
-    cols = [[.3922, .5137, 0.6196, 1],[1, .6353, .1451, 1]]
+    cols = [[.3922, .5137, 0.6196, 1],[1.0, 0.6353, 0.1451, 1]]
     cols = [[.6, .6, 1, 1],[1, .6, .6, 1],[.6, 1, .6, 1]]
+    #cols = [[.6, .6, 1, 1],[1, .6, .6, 1],[.6, 1, .6, 1]]
     for ob in obs:
         makeActive(ob)
         #mergeByThreshold(ob, 0.01)
@@ -877,11 +933,39 @@ def generateCubeWireFrame():
     mat = bpy.data.materials.get('wire')
     o.material_slots[0].material = mat
 #nodes = generateRandomStructure([3,3,3], 1)
-x = 10
-y = 10
+x = 12
+y = 12
 z = 1
 sp = 1/max(x,y,z)
-nodes = generateABCStructure(2,[x,y,z], sp, 7, 3, 3, 1)
+fabric4 = np.array([[1,0,0,0],
+                    [0,1,0,0],
+                    [0,0,0,1],
+                    [0,0,1,0]])
+fabric5 = np.array([[0,0,0,0,1],
+                    [0,0,1,0,0],
+                    [1,0,0,0,0],
+                    [0,0,0,1,0],
+                    [0,1,0,0,0]])
+fabric8 = np.array([[1,0,1,0,0,0,0,0],
+                    [0,0,0,0,0,1,0,1],
+                    [1,0,0,0,0,0,1,0],
+                    [0,0,0,1,0,1,0,0],
+                    [0,0,0,0,1,0,1,0],
+                    [0,1,0,1,0,0,0,0],
+                    [0,0,1,0,1,0,0,0],
+                    [0,1,0,0,0,0,0,1]])   
+fabric9 = np.array([[0,1,0,1,0,0,0,0,0],
+                    [0,0,1,0,1,0,0,0,0],
+                    [0,1,0,0,0,1,0,0,0],
+                    [0,0,0,1,0,0,0,1,0],
+                    [1,0,0,0,0,0,1,0,0],
+                    [0,0,0,1,0,0,0,0,1],
+                    [0,1,0,0,1,0,0,1,0],
+                    [0,0,0,1,0,0,0,0,0],
+                    [1,0,1,0,0,1,1,0,0],])
+
+#nodes = generateFabricShiftStructure(3,[x,y,z], sp, 7, fabric9, 1, 5)
+nodes = generateABCStructure(3,[x,y,z], sp, 7, 3, 3, 1)
 #nodes = generateFundamentalStructure(0,0,0, 0,0,0, sp,[x,y,z])
 #generateCubeWireFrame()
 #bpy.ops.object.mode_set(mode='VERTEX_PAINT')
