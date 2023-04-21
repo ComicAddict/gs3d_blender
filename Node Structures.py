@@ -933,14 +933,14 @@ def generateCubeWireFrame():
     mat = bpy.data.materials.get('wire')
     o.material_slots[0].material = mat
 #nodes = generateRandomStructure([3,3,3], 1)
-x = 12
-y = 12
-z = 1
+x = 10
+y = 10
+z = 10
 sp = 1/max(x,y,z)
 fabric4 = np.array([[1,0,0,0],
                     [0,1,0,0],
-                    [0,0,0,1],
-                    [0,0,1,0]])
+                    [0,0,1,0],
+                    [0,0,0,1]])# 1/3/1
 fabric5 = np.array([[0,0,0,0,1],
                     [0,0,1,0,0],
                     [1,0,0,0,0],
@@ -964,8 +964,8 @@ fabric9 = np.array([[0,1,0,1,0,0,0,0,0],
                     [0,0,0,1,0,0,0,0,0],
                     [1,0,1,0,0,1,1,0,0],])
 
-#nodes = generateFabricShiftStructure(3,[x,y,z], sp, 7, fabric9, 1, 5)
-nodes = generateABCStructure(3,[x,y,z], sp, 7, 3, 3, 1)
+#nodes = generateFabricShiftStructure(3,[x,y,z], sp, 7, fabric8, 1, 4)
+nodes = generateABCStructure(3,[x,y,z], sp, 7, 7, 1, 3)
 #nodes = generateFundamentalStructure(0,0,0, 0,0,0, sp,[x,y,z])
 #generateCubeWireFrame()
 #bpy.ops.object.mode_set(mode='VERTEX_PAINT')
