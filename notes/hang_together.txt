@@ -1,2 +1,0 @@
-Findings:
-fabric 8-5-2 may not be hang together in 8,1x8,3
