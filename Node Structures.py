@@ -94,20 +94,20 @@ def abcStructure(nodes, config, a, b, c):
             for k in range(nodes.shape[2]):
                 if((i-c*(j + k)) % (a+b) < a):
                     nodes[i,j,k].config = 0
-                    nodes[i,j,k].a = True
+                    nodes[i,j,k].a = False
                 else:
                     nodes[i,j,k].config = config
-                    nodes[i,j,k].a = False
+                    nodes[i,j,k].a = True
 
 def abcStructure2d(nodes, config, a, b, c):
     for i in range(nodes.shape[0]):
         for j in range(nodes.shape[1]): 
             if((i-c*(j)) % (a+b) < a):
                 nodes[i,j].config = 0
-                nodes[i,j].a = True
+                nodes[i,j].a = False
             else:
                 nodes[i,j].config = True
-                nodes[i,j].a = False
+                nodes[i,j].a = True
 
 def fabricShiftStructure(nodes, config, fabric, s0, s1):
     for i in range(nodes.shape[0]):
@@ -115,10 +115,10 @@ def fabricShiftStructure(nodes, config, fabric, s0, s1):
             for k in range(nodes.shape[2]):
                 if(fabric[(i+k*s0)%fabric.shape[0],(j+k*s1)%fabric.shape[1]] == 0):
                     nodes[i,j,k].config = 0
-                    nodes[i,j,k].a = True
+                    nodes[i,j,k].a = False
                 else:
                     nodes[i,j,k].config = config
-                    nodes[i,j,k].a = False
+                    nodes[i,j,k].a = True
                     
 def abcShiftStructure(nodes, config, a, b, c, s0, s1):
     for i in range(nodes.shape[0]):
@@ -126,10 +126,10 @@ def abcShiftStructure(nodes, config, a, b, c, s0, s1):
             for k in range(nodes.shape[2]):
                 if((( i + (k* s0))-c*(j + (k * s1))) % (a+b) < a):
                     nodes[i,j,k].config = 0
-                    nodes[i,j,k].a = True
+                    nodes[i,j,k].a = False
                 else:
                     nodes[i,j,k].config = config
-                    nodes[i,j,k].a = False
+                    nodes[i,j,k].a = True
                     """
     for k in range(nodes.shape[2]):
         for i in range(nodes.shape[0]): 
@@ -348,17 +348,17 @@ def generateABCStructure(n, dims, space, config, a, b, c):
         mat = bpy.data.materials.get('pipeshader')
         ob.material_slots[0].material = mat
         
-def generateFundamentalStructure(fx, fy, fz, sx, sy, sz, space, shape):
+def generateFundamentalStructure(fx, fy, fz, sx, sy, sz, space, shape, name="def"):
     nodes = np.ndarray(shape=(shape[0],shape[1],shape[2]),dtype=nodeStruct)
     configs = np.ndarray(shape=(2,2,2), dtype=np.int32)
-    configs[0,0,0] = 4 * fx     + 2 * fy      + fz
-    configs[0,0,1] = 4 * sx     + 2 * (not fy)    + (not fz)
-    configs[0,1,0] = 4 * (not fx) + 2 * sy        + (not fz)
-    configs[0,1,1] = 4 * (not sx) + 2 * (not sy)  + fz
-    configs[1,0,0] = 4 * (not fx) + 2 * (not fy)  + sz
-    configs[1,0,1] = 4 * (not sx) + 2 * (fy)    + (not sz)
-    configs[1,1,0] = 4 * fx     + 2 * (not sy)    + (not sz)
-    configs[1,1,1] = 4 * sx     + 2 * sy        + sz
+    configs[0,0,0] = 4 * fx         + 2 * fy        + fz
+    configs[1,0,0] = 4 * sx         + 2 * (not fy)  + (not fz)
+    configs[0,1,0] = 4 * (not fx)   + 2 * sy        + (not fz)
+    configs[1,1,0] = 4 * (not sx)   + 2 * (not sy)  + fz
+    configs[0,0,1] = 4 * (not fx)   + 2 * (not fy)  + sz
+    configs[1,0,1] = 4 * (not sx)   + 2 * (fy)      + (not sz)
+    configs[0,1,1] = 4 * fx         + 2 * (not sy)  + (not sz)
+    configs[1,1,1] = 4 * sx         + 2 * sy        + sz
     print(configs)
     for i in range(nodes.shape[0]): 
         for j in range(nodes.shape[1]):
@@ -366,12 +366,34 @@ def generateFundamentalStructure(fx, fy, fz, sx, sy, sz, space, shape):
                 nodes[i,j,k] = nodeStruct(configs[i%2,j%2,k%2], [0.0,0.0,0.0], [[0.0,0.0,0.1],[0.0,0.1,0.0]], [[0.1,0.0,0.1],[0.1,0.1,0.0]], [[0.0,0.1,0.1],[0.0,0.1,0.1]], False)
 
     updateStructure(nodes, space)
-    ob = generateStructureData(nodes)
+    ob = generateStructureData(nodes, ob_name=name)
     ma = max(shape[0], shape[1], shape[2])
-    m = 1.0/(max(shape[0], shape[1], shape[2])*5.0)
+    m = 1.0/(max(shape[0], shape[1], shape[2])*6.0)
     ob.modifiers["GeometryNodes"]["Input_8"] = m
+    ob.modifiers["GeometryNodes"]["Input_9"] = True
+    ob.modifiers["GeometryNodes"]["Input_12"] = 64
+    ob.data.update()
+    #ob.location = ob.location - mathutils.Vector((shape[0]/2 * space - space/2, shape[1]/2 * space- space/2, shape[2]/2* space- space/2))
+    return ob
+    
+def generateFundamentalStructureExplicit(configs, space, shape, name="def"):
+    nodes = np.ndarray(shape=(shape[0],shape[1],shape[2]),dtype=nodeStruct)
+    print(configs)
+    for i in range(nodes.shape[0]): 
+        for j in range(nodes.shape[1]):
+            for k in range(nodes.shape[2]):
+                nodes[i,j,k] = nodeStruct(configs[i%2,j%2,k%2], [0.0,0.0,0.0], [[0.0,0.0,0.1],[0.0,0.1,0.0]], [[0.1,0.0,0.1],[0.1,0.1,0.0]], [[0.0,0.1,0.1],[0.0,0.1,0.1]], False)
+
+    updateStructure(nodes, space)
+    ob = generateStructureData(nodes, ob_name=name)
+    ma = max(shape[0], shape[1], shape[2])
+    m = 1.0/(max(shape[0], shape[1], shape[2])*6.0)
+    ob.modifiers["GeometryNodes"]["Input_8"] = m
+    ob.modifiers["GeometryNodes"]["Input_9"] = True
+    ob.modifiers["GeometryNodes"]["Input_12"] = 64
     ob.data.update()
     ob.location = ob.location - mathutils.Vector((shape[0]/2 * space - space/2, shape[1]/2 * space- space/2, shape[2]/2* space- space/2))
+    return ob
 
 def generateABCStructure2d(dims, space, config, a, b, c):
     nodes = np.ndarray(shape=(dims[0],dims[1]),dtype=nodeStruct2d)
@@ -418,7 +440,7 @@ def joinAll():
     bpy.ops.object.join()
     bpy.ops.object.convert(target='MESH') 
     
-def generateStructureData(nodes, v = [], c = []) :
+def generateStructureData(nodes, v = [], c = [], ob_name="def_name") :
     edgesx = []
     edgesy = []
     edgesz = []
@@ -460,6 +482,9 @@ def generateStructureData(nodes, v = [], c = []) :
     qy = []
     qz = []
     q = 0
+    wx = []
+    wy = []
+    wz = []
     for i in range(nodes.shape[0]):
         for j in range(nodes.shape[1]):
             for k in range(nodes.shape[2]):
@@ -481,12 +506,14 @@ def generateStructureData(nodes, v = [], c = []) :
                     itx.append(j)
                     for p in nodes[i,j,k].pos: cx.append(float(p))
                     for p in nodes[i,j,k].pos: cx.append(float(p))
-                    ax.append(nodes[i,j,k].a)
-                    ax.append(nodes[i,j,k].a)
+                    ax.append(nodes[i-1,j,k].a or nodes[i,j,k].a)
+                    ax.append(nodes[i-1,j,k].a or nodes[i,j,k].a)
                     ix += 2
                     qx.append(q)
                     qx.append(q)
                     q += 1
+                    wx.append(True)
+                    wx.append(True)
                 if (j != 0):
                     edgesy.append(nodes[i,j - 1,k].e2[1].tolist())
                     edgesy.append(nodes[i,j,k].e2[0].tolist())
@@ -505,12 +532,14 @@ def generateStructureData(nodes, v = [], c = []) :
                     ity.append(i)
                     for p in nodes[i,j,k].pos: cy.append(float(p))
                     for p in nodes[i,j,k].pos: cy.append(float(p))
-                    ay.append(nodes[i,j,k].a)
-                    ay.append(nodes[i,j,k].a)
+                    ay.append(nodes[i,j-1,k].a or nodes[i,j,k].a)
+                    ay.append(nodes[i,j-1,k].a or nodes[i,j,k].a)
                     iy += 2
                     qy.append(q)
                     qy.append(q)
                     q += 1
+                    wy.append(True)
+                    wy.append(True)
                 if (k != 0):
                     edgesz.append(nodes[i,j,k - 1].e3[1].tolist())
                     edgesz.append(nodes[i,j,k].e3[0].tolist())
@@ -529,12 +558,14 @@ def generateStructureData(nodes, v = [], c = []) :
                     itz.append(i * nodes.shape[1] + j)
                     for p in nodes[i,j,k].pos: cz.append(float(p))
                     for p in nodes[i,j,k].pos: cz.append(float(p))
-                    az.append(nodes[i,j,k].a)
-                    az.append(nodes[i,j,k].a)
+                    az.append(nodes[i,j,k-1].a or nodes[i,j,k].a)
+                    az.append(nodes[i,j,k-1].a or nodes[i,j,k].a)
                     iz += 2
                     qz.append(q)
                     qz.append(q)
                     q += 1
+                    wz.append(True)
+                    wz.append(True)
                 n1x.append(k * nodes.shape[0] * nodes.shape[1] + j * nodes.shape[0] + i)
                 n1x.append(k * nodes.shape[0] * nodes.shape[1] + j * nodes.shape[0] + i)
                 
@@ -613,7 +644,12 @@ def generateStructureData(nodes, v = [], c = []) :
                 qz.append(q)
                 q += 1
             
-    
+                wx.append(False)    
+                wx.append(False)    
+                wy.append(False)    
+                wy.append(False)    
+                wz.append(False)    
+                wz.append(False)    
     faces = []
     # Create Mesh Datablock
     mesh1 = bpy.data.meshes.new("edges x")
@@ -625,6 +661,7 @@ def generateStructureData(nodes, v = [], c = []) :
     mesh1.attributes.new(name="nz", type="INT", domain="POINT")
     mesh1.attributes.new(name="c", type="FLOAT_VECTOR", domain="POINT")
     mesh1.attributes.new(name="a", type="BOOLEAN", domain="POINT")
+    mesh1.attributes.new(name="w", type="BOOLEAN", domain="POINT")
     mesh1.attributes.new(name="q", type="INT", domain="POINT")
     mesh1.attributes.new(name="it", type="INT", domain="POINT")
     mesh1.attributes["n"].data.foreach_set("value",nx)
@@ -634,6 +671,7 @@ def generateStructureData(nodes, v = [], c = []) :
     mesh1.attributes["nz"].data.foreach_set("value",nzx)
     mesh1.attributes["c"].data.foreach_set("vector",cx)
     mesh1.attributes["a"].data.foreach_set("value",ax)
+    mesh1.attributes["w"].data.foreach_set("value",wx)
     mesh1.attributes["q"].data.foreach_set("value",qx)
     mesh1.attributes["it"].data.foreach_set("value",itx)
     
@@ -646,6 +684,7 @@ def generateStructureData(nodes, v = [], c = []) :
     mesh2.attributes.new(name="nz", type="INT", domain="POINT")
     mesh2.attributes.new(name="c", type="FLOAT_VECTOR", domain="POINT")
     mesh2.attributes.new(name="a", type="BOOLEAN", domain="POINT")
+    mesh2.attributes.new(name="w", type="BOOLEAN", domain="POINT")
     mesh2.attributes.new(name="q", type="INT", domain="POINT")
     mesh2.attributes.new(name="it", type="INT", domain="POINT")
     mesh2.attributes["n"].data.foreach_set("value",ny)
@@ -655,6 +694,7 @@ def generateStructureData(nodes, v = [], c = []) :
     mesh2.attributes["nz"].data.foreach_set("value",nzy)
     mesh2.attributes["c"].data.foreach_set("vector",cy)
     mesh2.attributes["a"].data.foreach_set("value",ay)
+    mesh2.attributes["w"].data.foreach_set("value",wy)
     mesh2.attributes["q"].data.foreach_set("value",qy)
     mesh2.attributes["it"].data.foreach_set("value",ity)
         
@@ -667,6 +707,7 @@ def generateStructureData(nodes, v = [], c = []) :
     mesh3.attributes.new(name="nz", type="INT", domain="POINT")
     mesh3.attributes.new(name="c", type="FLOAT_VECTOR", domain="POINT")
     mesh3.attributes.new(name="a", type="BOOLEAN", domain="POINT")
+    mesh3.attributes.new(name="w", type="BOOLEAN", domain="POINT")
     mesh3.attributes.new(name="q", type="INT", domain="POINT")
     mesh3.attributes.new(name="it", type="INT", domain="POINT")
     mesh3.attributes["n"].data.foreach_set("value",nz)
@@ -676,6 +717,7 @@ def generateStructureData(nodes, v = [], c = []) :
     mesh3.attributes["nz"].data.foreach_set("value",nzz)
     mesh3.attributes["c"].data.foreach_set("vector",cz)
     mesh3.attributes["a"].data.foreach_set("value",az)
+    mesh3.attributes["w"].data.foreach_set("value",wz)
     mesh3.attributes["q"].data.foreach_set("value",qz)
     mesh3.attributes["it"].data.foreach_set("value",itz)
 
@@ -690,11 +732,17 @@ def generateStructureData(nodes, v = [], c = []) :
     #ob2.select = True
     ob3 = bpy.data.objects.new("edges z object", mesh3)
     ob3.data.vertex_colors.new()
+    
+    me = bpy.data.meshes.new(ob_name + "Mesh")
+    ob4 = bpy.data.objects.new(ob_name, me)
+
+    # Make a mesh from a list of vertices/edges/faces
     #ob3.select = True
     #bpy.ops.object.join
     bpy.context.scene.collection.objects.link(ob1)
     bpy.context.scene.collection.objects.link(ob2)
     bpy.context.scene.collection.objects.link(ob3)
+    bpy.context.scene.collection.objects.link(ob4)
     i = 0
     obs = [ob1, ob2, ob3]
     cols = [[.6, .6, 1, 1],[1, .6, .6, 1],[.6, 1, .6, 1]]
@@ -716,10 +764,14 @@ def generateStructureData(nodes, v = [], c = []) :
             a = v_index/len(bpy.context.object.data.vertices)
             herr.data[v_index].color = [a,a,a,1.0]
         i+=1
-    
-    addGeoNodes(ob1, "pipes")
+        
+    addGeoNodes(ob4, "pipes")
+    #addGeoNodes(ob4, "scale")
     coll1 = bpy.ops.collection.create(name  = "EdgeCollection")
     bpy.context.scene.collection.children.link(bpy.data.collections["EdgeCollection"])
+    makeActive(ob1)
+    bpy.context.scene.collection.objects.unlink(bpy.context.object)
+    bpy.data.collections["EdgeCollection"].objects.link(ob1)
     makeActive(ob2)
     bpy.context.scene.collection.objects.unlink(bpy.context.object)
     bpy.data.collections["EdgeCollection"].objects.link(ob2)
@@ -728,8 +780,9 @@ def generateStructureData(nodes, v = [], c = []) :
     bpy.data.collections["EdgeCollection"].objects.link(ob3)
     #bpy.ops.object.hide_collection(bpy.data.collections["EdgeCollection"])
     bpy.data.collections["EdgeCollection"].hide_viewport=True
+    bpy.data.collections["EdgeCollection"].hide_render=True
     makeActive(ob1)
-    return ob1
+    return ob4
     #print(bpy.context.object.modifiers)
 
     #print(dir(bpy.context.object.modifiers["GeometryNodes"]))
@@ -746,6 +799,7 @@ def generateStructureData2d(nodes, v = [], c = []) :
     ny = []
     n1x = []
     n2x = []
+    
     n1y = []
     n2y = []
     cx = []
@@ -906,23 +960,28 @@ def generateStructureData2d(nodes, v = [], c = []) :
 context = bpy.context
 scene = context.scene
 bpy.ops.object.select_all(action='DESELECT')
+
 for c in scene.collection.children:
-    scene.collection.children.unlink(c)
+    if c.name == 'EdgeCollection':
+        scene.collection.children.unlink(c)
 
 for c in bpy.data.collections:
-    if not c.users:
-        bpy.data.collections.remove(c)
+    if c.name == 'EdgeCollection':
+        if not c.users:
+            bpy.data.collections.remove(c)
         
 for ob in bpy.context.scene.objects:
     if ob.type == 'MESH':
-        ob.select_set(True)
+        if "edges" in ob.name:
+            ob.select_set(True)
     else:
         ob.select_set(False)
     bpy.ops.object.delete()
 
 for m in bpy.data.meshes:
-    m.user_clear()
-    bpy.data.meshes.remove(m)
+    if "edges" in m.name:
+        m.user_clear()
+        bpy.data.meshes.remove(m)
 
 def generateCubeWireFrame():
     bpy.ops.mesh.primitive_cube_add(location =(0,0,0))
@@ -932,15 +991,144 @@ def generateCubeWireFrame():
     bpy.ops.object.material_slot_add()
     mat = bpy.data.materials.get('wire')
     o.material_slots[0].material = mat
+    
+def generateConfigs(c):
+    configs = np.ndarray(shape=(2,2,2), dtype=np.int32)
+    match c:
+        # all different
+        case 0:
+            
+            configs[0,0,0] = 0
+            configs[1,0,0] = 3
+            configs[0,1,0] = 5
+            configs[1,1,0] = 6
+            configs[0,0,1] = 7
+            configs[1,0,1] = 4
+            configs[0,1,1] = 2
+            configs[1,1,1] = 1
+        # 4 versions rotated around diagonal axis
+        case 1:
+
+            configs[0,0,0] = 5
+            configs[1,0,0] = 6
+            configs[0,1,0] = 0
+            configs[1,1,0] = 3
+            configs[0,0,1] = 3
+            configs[1,0,1] = 0
+            configs[0,1,1] = 6
+            configs[1,1,1] = 5
+        case 2:
+            configs[0,0,0] = 1
+            configs[1,0,0] = 2
+            configs[0,1,0] = 4
+            configs[1,1,0] = 7
+            configs[0,0,1] = 7
+            configs[1,0,1] = 4
+            configs[0,1,1] = 2
+            configs[1,1,1] = 1
+        # 4 versions rotated around one axis
+        case 3:
+            configs[0,0,0] = 7
+            configs[1,0,0] = 4
+            configs[0,1,0] = 0
+            configs[1,1,0] = 3
+            configs[0,0,1] = 0
+            configs[1,0,1] = 3
+            configs[0,1,1] = 7
+            configs[1,1,1] = 4
+        case 4:
+            configs[0,0,0] = 6
+            configs[1,0,0] = 5
+            configs[0,1,0] = 1
+            configs[1,1,0] = 2
+            configs[0,0,1] = 1
+            configs[1,0,1] = 2
+            configs[0,1,1] = 6
+            configs[1,1,1] = 5
+        # 2 versions 
+        case 5:
+            configs[0,0,0] = 7
+            configs[1,0,0] = 0
+            configs[0,1,0] = 0
+            configs[1,1,0] = 7
+            configs[0,0,1] = 0
+            configs[1,0,1] = 7
+            configs[0,1,1] = 7
+            configs[1,1,1] = 0
+        case 6:
+            configs[0,0,0] = 6
+            configs[1,0,0] = 1
+            configs[0,1,0] = 1
+            configs[1,1,0] = 6
+            configs[0,0,1] = 1
+            configs[1,0,1] = 6
+            configs[0,1,1] = 6
+            configs[1,1,1] = 1
+        case 7:
+            configs[0,0,0] = 5
+            configs[1,0,0] = 2
+            configs[0,1,0] = 2
+            configs[1,1,0] = 5
+            configs[0,0,1] = 2
+            configs[1,0,1] = 5
+            configs[0,1,1] = 5
+            configs[1,1,1] = 2
+        case 8:
+            configs[0,0,0] = 4
+            configs[1,0,0] = 3
+            configs[0,1,0] = 3
+            configs[1,1,0] = 4
+            configs[0,0,1] = 3
+            configs[1,0,1] = 4
+            configs[0,1,1] = 4
+            configs[1,1,1] = 3
+        case '111':
+            configs[0,0,0] = 0
+            configs[1,0,0] = 7
+            configs[0,1,0] = 7
+            configs[1,1,0] = 0
+            configs[0,0,1] = 7
+            configs[1,0,1] = 0
+            configs[0,1,1] = 0
+            configs[1,1,1] = 7
+        case '011':
+            configs[1,0,0] = 0
+            configs[0,0,0] = 3
+            configs[0,1,0] = 7
+            configs[1,1,0] = 4
+            configs[0,0,1] = 7
+            configs[1,0,1] = 4
+            configs[0,1,1] = 0
+            configs[1,1,1] = 3
+        case '101':
+            configs[1,0,0] = 0
+            configs[0,0,0] = 7
+            configs[0,1,0] = 5
+            configs[1,1,0] = 2
+            configs[0,0,1] = 7
+            configs[1,0,1] = 0
+            configs[0,1,1] = 2
+            configs[1,1,1] = 5
+        case '001':
+            configs[1,0,0] = 0
+            configs[0,0,0] = 3
+            configs[0,1,0] = 5
+            configs[1,1,0] = 6
+            configs[0,0,1] = 7
+            configs[1,0,1] = 0
+            configs[0,1,1] = 2
+            configs[1,1,1] = 3
+            
+    return configs
 #nodes = generateRandomStructure([3,3,3], 1)
-x = 10
-y = 10
-z = 10
+x = 5
+y = 5
+z = 5  
 sp = 1/max(x,y,z)
 fabric4 = np.array([[1,0,0,0],
                     [0,1,0,0],
-                    [0,0,1,0],
-                    [0,0,0,1]])# 1/3/1
+                    [0,0,0,1],
+                    [0,0,1,0]])# 1/3/1
 fabric5 = np.array([[0,0,0,0,1],
                     [0,0,1,0,0],
                     [1,0,0,0,0],
@@ -964,9 +1152,36 @@ fabric9 = np.array([[0,1,0,1,0,0,0,0,0],
                     [0,0,0,1,0,0,0,0,0],
                     [1,0,1,0,0,1,1,0,0],])
 
-#nodes = generateFabricShiftStructure(3,[x,y,z], sp, 7, fabric8, 1, 4)
-nodes = generateABCStructure(3,[x,y,z], sp, 7, 7, 1, 3)
+#nodes = generateFabricShiftStructure(3,[x,y,z], sp, 7, fabric8, 2, 3)
+
+#nodes = generateABCStructure(3,[x,y,z], sp, 7, 7, 1, 3)
+
 #nodes = generateFundamentalStructure(0,0,0, 0,0,0, sp,[x,y,z])
+
+c = '000'
+
+configs = generateConfigs(c)
+x_0 = [0,0,0]
+x_1 = [1,1,1]
+
+#name = "plain_fund="+c+"_"+str(x)+"x"+str(y)+"x"+str(z)
+name = "plain_fund="+str(x_0)+"-"+str(x_1)+"_"+str(x)+"x"+str(y)+"x"+str(z)
+
+#name += "_exp"
+#nodes = generateFundamentalStructureExplicit(configs, sp,[x,y,z], name=name)
+
+nodes = generateFundamentalStructure(x_0[0], x_0[1], x_0[2], 
+                                    x_1[0], x_1[1], x_1[2], 
+                                    sp, [x,y,z], name=name)
+
+makeActive(nodes)
+bpy.ops.object.modifier_apply(modifier="GeometryNodes")
+addGeoNodes(nodes, "scale")
+
+bpy.context.view_layer.objects.active = bpy.data.objects['LineArt']
+#bpy.context.object.grease_pencil_modifiers["Line Art"].source_type = 'OBJECT'
+#bpy.context.object.grease_pencil_modifiers["Line Art"].source_object = bpy.data.objects[name]
+
 #generateCubeWireFrame()
 #bpy.ops.object.mode_set(mode='VERTEX_PAINT')
 #bpy.context.view_layer.objects.active = bpy.context.scene.objects["Plane"]
